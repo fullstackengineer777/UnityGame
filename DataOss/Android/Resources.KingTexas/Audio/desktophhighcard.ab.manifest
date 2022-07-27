@@ -1,0 +1,16 @@
+ManifestFileVersion: 0
+CRC: 3976508227
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 713375234e2c3ae27a00a79a97885e86
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 3f7d0c5e0986ec71841622bcb2f9be1c
+HashAppended: 0
+ClassTypes:
+- Class: 83
+  Script: {instanceID: 0}
+Assets:
+- Assets/Resources.KingTexas/BuildAssetBundleFromSingle/Audio/DesktopHHighCard.mp3
+Dependencies: []

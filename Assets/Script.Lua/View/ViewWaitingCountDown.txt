@@ -1,0 +1,85 @@
+-- Copyright(c) Cragon. All rights reserved.
+
+---------------------------------------
+ViewWaitingCountDown = class(ViewBase)
+
+---------------------------------------
+function ViewWaitingCountDown:ctor()
+    self.TimerUpdate = nil
+    self.CasinosContext = CS.Casinos.CasinosContext.Instance
+end
+
+---------------------------------------
+function ViewWaitingCountDown:OnCreate()
+    local text = self.ComUi:GetChild("Tips")
+    if (text ~= nil) then
+        self.GTextTips = text.asTextField
+    end
+
+    self.TextMin = self.ComUi:GetChild("TextMin").asTextField
+    self.TextSec = self.ComUi:GetChild("TextSec").asTextField
+    self.UpdateTimeTm = 0
+    self.TimerUpdate = self.CasinosContext.TimerShaft:RegisterTimer(100, self, self._timerUpdate)
+end
+
+---------------------------------------
+function ViewWaitingCountDown:OnDestroy()
+    if (self.TimerUpdate ~= nil) then
+        self.TimerUpdate:Close()
+        self.TimerUpdate = nil
+    end
+end
+
+---------------------------------------
+function ViewWaitingCountDown:OnHandleEv(ev)
+end
+
+---------------------------------------
+function ViewWaitingCountDown:_timerUpdate(tm)
+    self.Tm = self.Tm - tm
+    self:setTm()
+    if self.Tm <= 0 then
+        self.ViewMgr:DestroyView(self)
+    end
+end
+
+---------------------------------------
+function ViewWaitingCountDown:SetTips(tips, tm)
+    self.GTextTips.text = tips
+    self.Tm = tm
+    self:setTm()
+end
+
+---------------------------------------
+function ViewWaitingCountDown:setTm()
+    if self.Tm < 0 then
+        self.Tm = 0
+    end
+    local multiple = self.Tm / 60
+    local remainder = self.Tm % 60
+    local min = ""
+    multiple = math.floor(multiple)
+    if multiple < 10 then
+        min = "0" .. tostring(multiple)
+    else
+        min = tostring(multiple)
+    end
+    local sec = ""
+    remainder = math.floor(remainder)
+    if remainder < 10 then
+        sec = "0" .. tostring(remainder)
+    else
+        sec = tostring(remainder)
+    end
+    self.TextMin.text = min
+    self.TextSec.text = sec
+end
+
+---------------------------------------
+ViewWaitingCountDownFactory = class(ViewFactory)
+
+---------------------------------------
+function ViewWaitingCountDownFactory:CreateView()
+    local view = ViewWaitingCountDown:new()
+    return view
+end

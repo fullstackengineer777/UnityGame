@@ -1,0 +1,16 @@
+-- Copyright(c) Cragon. All rights reserved.
+
+---------------------------------------
+MoneyType = {
+    CNY = 0, -- 人民币
+    USD = 1, -- 美元
+    EUR = 2, -- 欧元
+    NGN = 3, -- 尼日利亚，奈拉
+    GHC = 4, -- 加纳，塞地
+}
+
+WalletResult = {
+    Success = 0,
+    False = 1,
+    Timeout = 2,
+}

@@ -1,0 +1,16 @@
+ManifestFileVersion: 0
+CRC: 1636302042
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: ae0ff2dc7434f99c83b1ace9672fa9f9
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 3f7d0c5e0986ec71841622bcb2f9be1c
+HashAppended: 0
+ClassTypes:
+- Class: 83
+  Script: {instanceID: 0}
+Assets:
+- Assets/Resources.KingTexas/BuildAssetBundleFromSingle/Audio/desk_post_raise.wav
+Dependencies: []

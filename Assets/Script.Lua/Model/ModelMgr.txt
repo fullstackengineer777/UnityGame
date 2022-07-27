@@ -1,0 +1,48 @@
+-- Copyright(c) Cragon. All rights reserved.
+require('ModelCommon')
+require('ModelAccount')
+require('ModelActor')
+require('ModelWallet')
+require('ModelUCenter')
+require('ModelTrade')
+require('ModelDesktop')
+require('ModelDesktopTexas')
+require('ModelDesktopTexasMatch')
+require('ModelActivity')
+require('ModelGrow')
+require('ModelPlayer')
+require('ModelRank')
+require('ModelMarquee')
+require('ModelBag')
+require('ModelDesktopH')
+require('ModelIM')
+require('ModelIMClientEvent')
+require('ModelIMMailBox')
+require('ModelLotteryTicket')
+require('ModelPlayer')
+require('ModelPlayerInfo')
+require('ModelVCoin')
+require('ModelWallet')
+
+---------------------------------------
+ModelMgr = {
+    MapAssetBundle = {}, -- key=AssetBundle Name, value=AssetBundle
+}
+
+---------------------------------------
+function ModelMgr:Setup()
+end
+
+---------------------------------------
+-- 是否加载过指定名字的AssetBundle
+function ModelMgr:QueryAssetBundle(ab_name)
+    local ab = self.MapAssetBundle[ab_name];
+    return ab
+end
+
+---------------------------------------
+-- 确认加载过指定名字的AssetBundle
+function ModelMgr:AddAssetBundle(ab_name, ab)
+    --table.insert(self.MapAssetBundle, ab_name, ab)
+    self.MapAssetBundle[ab_name] = ab
+end

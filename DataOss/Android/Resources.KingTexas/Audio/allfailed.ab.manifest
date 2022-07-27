@@ -1,0 +1,16 @@
+ManifestFileVersion: 0
+CRC: 3820637271
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 914588b72fb59270f587426f39a06f2d
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 3f7d0c5e0986ec71841622bcb2f9be1c
+HashAppended: 0
+ClassTypes:
+- Class: 83
+  Script: {instanceID: 0}
+Assets:
+- Assets/Resources.KingTexas/BuildAssetBundleFromSingle/Audio/AllFailed.wav
+Dependencies: []

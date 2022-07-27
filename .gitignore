@@ -1,0 +1,18 @@
+# CasinosClient
+
+*.userprefs
+.DS_Store
+.vs/
+Library/
+Logs/
+obj/
+Temp/
+Assets/.idea/
+Assets/.DS_Store
+Assets/SettingsUser/
+Assets/Script.Lua/.idea/
+/DataOss/Common/Lua/.idea
+/DataOss/Launch/Cs
+ProjectUiKing/.objs/
+/*.csproj
+CasinosClientGithub.sln

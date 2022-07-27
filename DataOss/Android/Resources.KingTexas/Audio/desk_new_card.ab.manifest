@@ -1,0 +1,16 @@
+ManifestFileVersion: 0
+CRC: 1841671097
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 336a2f31dfa8cc5e22d8ac653827891c
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 3f7d0c5e0986ec71841622bcb2f9be1c
+HashAppended: 0
+ClassTypes:
+- Class: 83
+  Script: {instanceID: 0}
+Assets:
+- Assets/Resources.KingTexas/BuildAssetBundleFromSingle/Audio/desk_new_card.wav
+Dependencies: []

@@ -1,0 +1,16 @@
+ManifestFileVersion: 0
+CRC: 2289766211
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 0bd45fe8af65f023de730fe4a1c0a4d9
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 3f7d0c5e0986ec71841622bcb2f9be1c
+HashAppended: 0
+ClassTypes:
+- Class: 83
+  Script: {instanceID: 0}
+Assets:
+- Assets/Resources.KingTexas/BuildAssetBundleFromSingle/Audio/flowerf.mp3
+Dependencies: []

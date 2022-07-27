@@ -1,0 +1,16 @@
+ManifestFileVersion: 0
+CRC: 2774066695
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: ffadac052f7a7d587c9c8089c007e436
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+Assets:
+- Assets/Resources.KingTexas/BuildAssetBundleFromFold/Ui/About/About_fui.bytes
+Dependencies: []

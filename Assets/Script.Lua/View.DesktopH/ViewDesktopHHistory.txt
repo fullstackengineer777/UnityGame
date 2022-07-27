@@ -1,0 +1,71 @@
+-- Copyright(c) Cragon. All rights reserved.
+
+---------------------------------------
+ViewDesktopHHistory = class(ViewBase)
+
+---------------------------------------
+function ViewDesktopHHistory:ctor()
+    self.Tween = nil
+end
+
+---------------------------------------
+function ViewDesktopHHistory:OnCreate()
+    self.Tween = ViewHelper:PopUi(self.ComUi, self.ViewMgr.LanMgr:GetLanValue("DesktopHHistory"))
+    self.ViewMgr:BindEvListener("EvEntityDesktopHGameEndState", self)
+    local co_history_close = self.ComUi:GetChild("ComBgAndClose").asCom
+    local btn_history_close = co_history_close:GetChild("BtnClose").asButton
+    btn_history_close.onClick:Add(
+            function()
+                self:_onClickBtnHistoryClose()
+            end
+    )
+    local com_shade = co_history_close:GetChild("ComShade").asCom
+    com_shade.onClick:Add(
+            function()
+                self:_onClickBtnHistoryClose()
+            end
+    )
+    self.GListHistory = self.ComUi:GetChild("ListHistroy").asList
+    self.ViewDesktopH = self.ViewMgr:GetView("DesktopH")
+end
+
+---------------------------------------
+function ViewDesktopHHistory:OnDestroy()
+    if self.Tween ~= nil then
+        self.Tween:Kill(false)
+        self.Tween = nil
+    end
+    self:UnbindEvListener(self)
+end
+
+---------------------------------------
+function ViewDesktopHHistory:OnHandleEv(ev)
+    if (ev ~= nil) then
+        if (ev.EventName == "EvEntityDesktopHGameEndState") then
+            self:setHistory(self.ViewDesktopH.ControllerDesktopH.MapBetPotWinlooseRecord)
+        end
+    end
+end
+
+---------------------------------------
+function ViewDesktopHHistory:setHistory(map_history)
+    self.GListHistory:RemoveChildrenToPool()
+    for i = 0, #map_history do
+        local co_itemhistory = self.GListHistory:AddItemFromPool().asCom
+        UiDesktopHHistroy:new(co_itemhistory, self.ViewDesktopH, i, map_history[i])
+    end
+end
+
+---------------------------------------
+function ViewDesktopHHistory:_onClickBtnHistoryClose()
+    self.ViewMgr:DestroyView(self)
+end
+
+---------------------------------------
+ViewDesktopHHistoryFactory = class(ViewFactory)
+
+---------------------------------------
+function ViewDesktopHHistoryFactory:CreateView()
+    local view = ViewDesktopHHistory:new()
+    return view
+end

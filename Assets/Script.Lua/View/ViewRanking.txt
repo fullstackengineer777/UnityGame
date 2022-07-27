@@ -1,0 +1,198 @@
+-- Copyright(c) Cragon. All rights reserved.
+
+---------------------------------------
+ViewRanking = class(ViewBase)
+
+---------------------------------------
+function ViewRanking:ctor()
+    self.Tween = nil
+    self.ChampionSignName = "Rank1"
+    self.SecondPlaceSignName = "Rank2"
+    self.ThirdPlaceSignName = "Rank3"
+end
+
+---------------------------------------
+function ViewRanking:OnCreate()
+    self:BindEvListener("EvEntityGetRankingDiamond", self)
+    self:BindEvListener("EvEntityGetRankingGold", self)
+    self:BindEvListener("EvEntityGetRankingRedEnvelopes", self)
+    --self:BindEvListener("EvEntityGetRankingWinGold",self)
+
+    self.Tween = ViewHelper:PopUi(self.ComUi, self.ViewMgr.LanMgr:GetLanValue("Ranking"))
+    self.ControllerRanking = self.ControllerMgr:GetController("Ranking")
+    self.Controller = self.ComUi:GetController("ControllerRanking")
+    local com_bg = self.ComUi:GetChild("ComBgAndClose").asCom
+    local btn_return = com_bg:GetChild("BtnClose").asButton
+    btn_return.onClick:Add(
+            function()
+                self:onClickBtnReturn()
+            end
+    )
+    local com_shade = com_bg:GetChild("ComShade").asCom
+    com_shade.onClick:Add(
+            function()
+                self:onClickBtnReturn()
+            end
+    )
+    local btn_tabDiamond = self.ComUi:GetChild("BtnTabDiamond").asButton
+    btn_tabDiamond.onClick:Add(
+            function()
+                self:onClickBtnDiamond()
+            end
+    )
+    local btn_tabCold = self.ComUi:GetChild("BtnTabGold").asButton
+    btn_tabCold.onClick:Add(
+            function()
+                self:onClickBtnGold()
+            end
+    )
+    local btn_tabred = self.ComUi:GetChild("BtnTabRed").asButton
+    btn_tabred.onClick:Add(
+            function()
+                self:onClickBtnRed()
+            end
+    )
+
+    self.GListRanking = self.ComUi:GetChild("RankingList").asList
+    local ev = self:GetEv("EvUiGetRankingGold")
+    if (ev == nil) then
+        ev = EvUiGetRankingGold:new(nil)
+    end
+    self:SendEv(ev)
+
+    self.RankingListType = RankingListType.Chip
+    self.GListRanking.itemRenderer = function(a, b)
+        self:RenderListItem(a, b)
+    end
+    self.GListRanking:SetVirtual()
+end
+
+---------------------------------------
+function ViewRanking:OnDestroy()
+    if self.Tween ~= nil then
+        self.Tween:Kill(false)
+        self.Tween = nil
+    end
+    self:UnbindEvListener(self)
+end
+
+---------------------------------------
+function ViewRanking:OnHandleEv(ev)
+    if (ev ~= nil) then
+        if (ev.EventName == "EvEntityGetRankingDiamond") then
+            self.GListRanking.numItems = #self.ControllerRanking.ListRankingDiamond
+        elseif (ev.EventName == "EvEntityGetRankingGold") then
+            self.GListRanking.numItems = #self.ControllerRanking.ListRankingGold
+        elseif (ev.EventName == "EvEntityGetRankingRedEnvelopes") then
+            self.GListRanking.numItems = #self.ControllerRanking.ListRankingRedEnvelopes
+            --elseif(ev.EventName == "EvEntityGetRankingWinGold") then
+            --   self.GListRanking.numItems = #self.ControllerRanking.ListRankingWinGold
+        end
+    end
+end
+
+---------------------------------------
+function ViewRanking:RenderListItem(index, obj)
+    local com = CS.Casinos.LuaHelper.GObjectCastToGCom(obj)
+    local item = ItemRank:new(nil, com, self)
+    if (self.RankingListType == RankingListType.Chip) then
+        if (self.ControllerRanking.ListRankingGold ~= nil) then
+            if (#self.ControllerRanking.ListRankingGold > index) then
+                local rank_info = self.ControllerRanking.ListRankingGold[index + 1]
+                item:SetRankInfo(self.ViewMgr, rank_info.player_guid, rank_info.nick_name, rank_info.icon_name,
+                        rank_info.account_id, rank_info.gold, 0, index, true, nil)
+            end
+        end
+    elseif (self.RankingListType == RankingListType.Gold) then
+        if (self.ControllerRanking.ListRankingDiamond ~= nil) then
+            if (#self.ControllerRanking.ListRankingDiamond > index) then
+                local rank_info = self.ControllerRanking.ListRankingDiamond[index + 1]
+                item:SetRankInfo(self.ViewMgr, rank_info.player_guid, rank_info.nick_name, rank_info.icon_name,
+                        rank_info.account_id, rank_info.diamond, 0, index, false, nil)
+            end
+        end
+    elseif (self.RankingListType == RankingListType.Level) then
+        if (self.ControllerRanking.ListRankingLevel ~= nil) then
+            if (#self.ControllerRanking.ListRankingLevel > index) then
+                local rank_info = self.ControllerRanking.ListRankingLevel[index + 1]
+                item:SetRankInfo(self.ViewMgr, rank_info.player_guid, rank_info.nick_name, rank_info.icon_name,
+                        rank_info.account_id, rank_info.player_level, 0, index, true, nil)
+            end
+        end
+    elseif (self.RankingListType == RankingListType.Gift) then
+    elseif (self.RankingListType == RankingListType.WinGold) then
+        if (self.ControllerRanking.ListRankingWinGold ~= nil) then
+            if (#self.ControllerRanking.ListRankingWinGold > index) then
+                local rank_info = self.ControllerRanking.ListRankingWinGold[index + 1]
+                item:SetRankInfo(self.ViewMgr, rank_info.player_guid, rank_info.nick_name, rank_info.icon_name,
+                        rank_info.account_id, rank_info.win_gold, 0, index, true, nil)
+            end
+        end
+    else
+        if (self.ControllerRanking.ListRankingRedEnvelopes ~= nil) then
+            if (#self.ControllerRanking.ListRankingRedEnvelopes > index) then
+                local rank_info = self.ControllerRanking.ListRankingRedEnvelopes[index + 1]
+                item:SetRankInfo(self.ViewMgr, rank_info.player_guid, rank_info.nick_name, rank_info.icon_name,
+                        rank_info.account_id, rank_info.win_redenvelope / 100, 0, index, true, self.ViewMgr.LanMgr:GetLanValue("Yuan"))
+            end
+        end
+    end
+end
+
+---------------------------------------
+function ViewRanking:onClickBtnReturn()
+    self.ViewMgr:DestroyView(self)
+end
+
+---------------------------------------
+function ViewRanking:onClickBtnDiamond()
+    local ev = self:GetEv("EvUiGetRankingDiamond")
+    if (ev == nil) then
+        ev = EvUiGetRankingDiamond:new(nil)
+    end
+    self:SendEv(ev)
+    self.Controller:SetSelectedPage("Diamond")
+    self.RankingListType = RankingListType.Gold
+end
+
+---------------------------------------
+function ViewRanking:onClickBtnGold()
+    local ev = self:GetEv("EvUiGetRankingGold")
+    if (ev == nil) then
+        ev = EvUiGetRankingGold:new(nil)
+    end
+    self:SendEv(ev)
+    self.Controller:SetSelectedPage("Coin")
+    self.RankingListType = RankingListType.Chip
+end
+
+---------------------------------------
+function ViewRanking:onClickBtnWin()
+    local ev = self:GetEv("EvUiGetRankingWinGold")
+    if (ev == nil) then
+        ev = EvUiGetRankingWinGold:new(nil)
+    end
+    self:SendEv(ev)
+    self.Controller:SetSelectedPage("Win")
+    self.RankingListType = RankingListType.WinGold
+end
+
+---------------------------------------
+function ViewRanking:onClickBtnRed()
+    local ev = self:GetEv("EvUiGetRankingRedEnvelopes")
+    if (ev == nil) then
+        ev = EvUiGetRankingRedEnvelopes:new(nil)
+    end
+    self:SendEv(ev)
+    self.Controller:SetSelectedPage("Win")
+    self.RankingListType = RankingListType.RedEnvelopes
+end
+
+---------------------------------------
+ViewRankingFactory = class(ViewFactory)
+
+---------------------------------------
+function ViewRankingFactory:CreateView()
+    local view = ViewRanking:new()
+    return view
+end

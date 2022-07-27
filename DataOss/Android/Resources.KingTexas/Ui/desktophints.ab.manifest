@@ -1,0 +1,19 @@
+ManifestFileVersion: 0
+CRC: 4020971711
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 3cc7958c01d281282a60913a079ff19d
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 8cfd36d84ed37a63bcb3c7ce96d93f72
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 49
+  Script: {instanceID: 0}
+Assets:
+- Assets/Resources.KingTexas/BuildAssetBundleFromFold/Ui/DesktopHints/DesktopHints_fui.bytes
+- Assets/Resources.KingTexas/BuildAssetBundleFromFold/Ui/DesktopHints/DesktopHints_atlas0.png
+Dependencies: []

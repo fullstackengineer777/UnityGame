@@ -1,0 +1,387 @@
+-- Copyright(c) Cragon. All rights reserved.
+-- 钱包界面
+
+---------------------------------------
+ViewWallet = class(ViewBase)
+
+---------------------------------------
+function ViewWallet:ctor()
+    self.TemporaryHideItemId = 14001
+    self.MapShopGold = {}
+    self.CtrlActor = self.ControllerMgr:GetController("Actor")
+    self.CtrlWallet = self.ControllerMgr:GetController("Wallet")
+    self.GTransShow = nil
+    self.GCtrlTab = nil
+    self.GBtnReturn = nil
+    self.GBtnTabRecharge = nil
+    self.GBtnTabWithdraw = nil
+    self.GBtnTabRecord = nil
+    self.GBtnCopyAddress = nil-- 按钮，复制Address到剪切板
+    self.GBtnCopyMemo = nil-- 按钮，复制Memo到剪切板
+    self.GBtnWithdraw = nil
+    self.GBtnWithdrawAddresValid = nil
+    self.GTxtChargeAddress = nil
+    self.GTxtChargeMemo = nil
+    self.GTxtGold = nil
+    self.GTxtDiamond = nil
+    self.GTxtWithdrawAddress = nil-- 提现目标Address
+    self.GTxtWithdrawMemo = nil-- 提现目标Memo
+    self.GTxtWithdrawGoldVolume = nil-- 提现消耗Gold
+    self.GTxtWithdrawVCoinVolume = nil-- 提现到账VCoin
+    self.GTxtWithdrawFee = nil-- 提现手续费
+    self.GComTabRecharge = nil
+    self.GComTabWithdraw = nil
+    self.GComTabRecord = nil
+    self.GListRecord = nil
+end
+
+---------------------------------------
+function ViewWallet:OnCreate()
+    self:BindEvListener("EvEntityGoldChanged", self)
+    self:BindEvListener("EvEntityDiamondChanged", self)
+
+    local com_tabtitle = self.ComUi:GetChild("ComTabTitle").asCom
+
+    self.GTransShow = self.ComUi:GetTransition("TransitionShow")
+    self.GTransShow:Play()
+
+    self.GCtrlTab = self.ComUi:GetController("CtrlTab")
+
+    self.GBtnReturn = self.ComUi:GetChild("BtnReturn").asButton
+    self.GBtnReturn.onClick:Add(
+            function()
+                self:_onClickBtnReturn()
+            end
+    )
+
+    self.GBtnTabRecharge = com_tabtitle:GetChild("BtnTabRecharge").asCom
+    self.GBtnTabRecharge.onClick:Add(
+            function()
+                self:_onClickBtnTabRecharge()
+            end)
+
+    self.GBtnTabWithdraw = com_tabtitle:GetChild("BtnTabWithdraw").asCom
+    self.GBtnTabWithdraw.onClick:Add(
+            function()
+                self:_onClickBtnTabWithdraw()
+            end)
+
+    self.GBtnTabRecord = com_tabtitle:GetChild("BtnTabRecord").asCom
+    self.GBtnTabRecord.onClick:Add(
+            function()
+                self:_onClickBtnTabRecord()
+            end)
+
+    self.GComTabRecharge = self.ComUi:GetChild("ComTabRecharge").asCom
+    self.GComTabWidthdraw = self.ComUi:GetChild("ComTabWithdraw").asCom
+
+    self.GBtnWithdraw = self.GComTabWidthdraw:GetChild("BtnWithdraw").asButton
+    self.GBtnWithdraw.onClick:Add(
+            function()
+                self:_onClickBtnWithdraw()
+            end)
+    self.GBtnWithdrawAddresValid = self.GComTabWidthdraw:GetChild("BtnWithdrawAddressValid").asButton
+    self.GBtnWithdrawAddresValid.onClick:Add(
+            function()
+                self:_onClickBtnWithdrawAddressValid()
+            end)
+
+    self.GTxtWithdrawAddress = self.GComTabWidthdraw:GetChild("TxtAddress").asTextInput
+    self.GTxtWithdrawMemo = self.GComTabWidthdraw:GetChild("TxtMemo").asTextInput
+    self.GTxtWithdrawGoldVolume = self.GComTabWidthdraw:GetChild("TxtGoldVolume").asTextField
+    self.GTxtWithdrawVCoinVolume = self.GComTabWidthdraw:GetChild("TxtVCoinVolume").asTextField
+    self.GTxtWithdrawFee = self.GComTabWidthdraw:GetChild("TxtFee").asTextField
+
+    self.GComTabRecord = self.ComUi:GetChild("ComTabRecord").asCom
+
+    self.GTxtChargeAddress = self.GComTabRecharge:GetChild("TextAddress").asTextField
+    self.GTxtChargeMemo = self.GComTabRecharge:GetChild("TextMemo").asTextField
+
+    self.GBtnCopyAddress = self.GComTabRecharge:GetChild("BtnCopyAddress").asCom
+    self.GBtnCopyAddress.onClick:Add(
+            function()
+                self:_onClickBtnCopyAddress()
+            end)
+
+    self.GBtnCopyMemo = self.GComTabRecharge:GetChild("BtnCopyMemo").asCom
+    self.GBtnCopyMemo.onClick:Add(
+            function()
+                self:_onClickBtnCopyMemo()
+            end)
+
+    self.GListRecord = self.GComTabRecord:GetChild("ListRecord").asList
+    self.GListRecord.itemRenderer = function(index, obj)
+        self:_renderListRecord(index, obj)
+    end
+    self.GListRecord.onClickItem:Add(
+            function(ev_context)
+                self:_onClickListRecordItem(ev_context)
+            end)
+    self.GListRecord:SetVirtual()
+    self.GListRecord.numItems = 0
+
+    local btn_addchip = self.ComUi:GetChild("BtnAddChip").asButton
+    self.GTxtGold = btn_addchip:GetChild("TextChipAmount").asTextField
+    local btn_adddiamond = self.ComUi:GetChild("BtnAddDiamond").asButton
+    self.GTxtDiamond = btn_adddiamond:GetChild("TextDiamondAmount").asTextField
+    self:_refreshPlayerGoldAndDiamond()
+
+    local bg = self.ComUi:GetChild("Bg")
+    if (bg ~= nil) then
+        ViewHelper:MakeUiBgFiteScreen(ViewMgr.STANDARD_WIDTH, ViewMgr.STANDARD_HEIGHT, self.ComUi.width, self.ComUi.height, bg.width, bg.height, bg, BgAttachMode.Center)
+    end
+
+    self:_onClickBtnTabRecharge()
+
+    self.CtrlWallet:RequestVCoinGetOrGenerateAddress()
+    self.CtrlWallet:RequestVCoinGetVCoinMyInfo()
+end
+
+---------------------------------------
+function ViewWallet:OnDestroy()
+    self.GBtnReturn.onClick:Clear()
+    self.GListRecord.onClickItem:Clear()
+    self.GBtnTabRecharge.onClick:Clear()
+    self.GBtnTabWithdraw.onClick:Clear()
+    self.GBtnTabRecord.onClick:Clear()
+
+    self:UnbindEvListener(self)
+end
+
+---------------------------------------
+function ViewWallet:OnHandleEv(ev)
+    if (ev.EventName == "EvEntityGoldChanged") then
+        self:_refreshPlayerGoldAndDiamond()
+    elseif (ev.EventName == "EvEntityDiamondChanged") then
+        self:_refreshPlayerGoldAndDiamond()
+    end
+end
+
+---------------------------------------
+-- 交易通知
+function ViewWallet:OnVCoinTransNotify(result, record)
+    print('ViewWallet:OnVCoinTransNotify() Result=' .. result)
+    if record ~= nil then
+        local l_tm = CS.System.DateTime.Parse(record.Dt)
+        local dt = CS.Casinos.UiHelper.getLocalTmToString(l_tm)
+        print(string.format('Record Id=%s ChargeOrWithdraw=%s Currency=%s Volume=%s Dt=%s WithdrawStatus=%s',
+                record.Id, record.ChargeOrWithdraw, record.Currency, record.Volume, dt, record.WithdrawStatus))
+    end
+end
+
+---------------------------------------
+-- 获取虚拟币地址通知
+function ViewWallet:OnVCoinGetOrGenerateAddressNotify(vcoin_getorgenerate_address_notify)
+    print('ViewWallet:OnVCoinGetOrGenerateAddressNotify()')
+    --print(string.format('Currency=%s Address=%s Memo=%s',
+    --        vcoin_getorgenerate_address_notify.Currency, vcoin_getorgenerate_address_notify.Address, vcoin_getorgenerate_address_notify.Memo))
+
+    -- 设置Text Charge Address&Memo
+    if self.CtrlWallet.VCoinCurrentInfo ~= nil then
+        self.GTxtChargeAddress.text = self.CtrlWallet.VCoinCurrentInfo.Address
+        self.GTxtChargeMemo.text = self.CtrlWallet.VCoinCurrentInfo.Memo
+
+        -- 设置二维码
+        local gloader_qrcode = self.GComTabRecharge:GetChild('LoaderQRCode').asLoader
+        local url = self.CtrlWallet.VCoinCurrentInfo.Address
+        local t = CS.UnityEngine.Texture2D(256, 256)
+        local colors = self.CasinosContext.LuaMgr:CreateQRCode(url, t.width, t.height)
+        t:SetPixels32(colors)
+        t:Apply()
+        gloader_qrcode.texture = CS.FairyGUI.NTexture(t)
+    end
+end
+
+---------------------------------------
+-- 验证提现地址有效性通知
+function ViewWallet:OnVCoinWithdrawAddressValidNotify(wallet_withdrawaddressvalid_notify)
+    print('ViewWallet:OnVCoinWithdrawAddressValidNotify()')
+    print(string.format('Address=%s Memo=%s IsValid=%s',
+            wallet_withdrawaddressvalid_notify.Address, wallet_withdrawaddressvalid_notify.Memo, wallet_withdrawaddressvalid_notify.IsValid))
+end
+
+---------------------------------------
+-- 获取交易记录通知
+function ViewWallet:OnVCoinGetTransListNotify()
+    print('ViewWallet:OnVCoinGetTransListNotify()')
+
+    if self.CtrlWallet.ListRecord ~= nil then
+        self.GListRecord.numItems = #self.CtrlWallet.ListRecord
+    end
+end
+
+---------------------------------------
+-- 响应获取本人VCoin信息
+function ViewWallet:OnVCoinGetMyVCoinInfoResponse()
+    print('ViewWallet:OnVCoinGetMyVCoinInfoResponse()')
+    self:_refreshQRCode()
+end
+
+---------------------------------------
+function ViewWallet:_renderListRecord(index, obj)
+    local com = CS.Casinos.LuaHelper.GObjectCastToGCom(obj)
+    local text1 = com:GetChild("Txt1").asTextField
+    local text2 = com:GetChild("Txt2").asTextField
+    local text3 = com:GetChild("Txt3").asTextField
+    local text4 = com:GetChild("Txt4").asTextField
+    local text5 = com:GetChild("Txt5").asTextField
+
+    if self.CtrlWallet.ListRecord ~= nil then
+        if #self.CtrlWallet.ListRecord > index then
+            local item = self.CtrlWallet.ListRecord[index + 1]
+            local l_tm = CS.System.DateTime.Parse(item.Dt)
+            local dt = CS.Casinos.UiHelper.getLocalTmToString(l_tm)
+            if item.ChargeOrWithdraw == true then
+                text1.text = '充值'
+            else
+                text1.text = '提现'
+            end
+            text2.text = item.Currency
+            text3.text = item.Volume
+            text4.text = dt
+            text4.color = CS.UnityEngine.Color(0.85, 0.85, 0.85)
+            text5.text = '已完成'
+            text5.color = CS.UnityEngine.Color(0.38, 0.89, 1)
+        end
+    end
+end
+
+---------------------------------------
+function ViewWallet:_onClickBtnReturn()
+    self.ViewMgr:DestroyView(self)
+end
+
+---------------------------------------
+function ViewWallet:_onClickListRecordItem(ev_context)
+    local com = ev_context.data.asCom
+    local text2 = com:GetChild("n2").asTextField
+    print('_onClickListRecordItem Dt=' .. text2.text)
+end
+
+---------------------------------------
+function ViewWallet:_onClickBtnTabRecharge()
+    local gctrl_tabrecharge_state = self.GBtnTabRecharge:GetController("CtrlState")
+    gctrl_tabrecharge_state.selectedIndex = 1
+    local gctrl_tabwithdraw_state = self.GBtnTabWithdraw:GetController("CtrlState")
+    gctrl_tabwithdraw_state.selectedIndex = 0
+    local gctrl_tabrecord_state = self.GBtnTabRecord:GetController("CtrlState")
+    gctrl_tabrecord_state.selectedIndex = 0
+
+    self.GCtrlTab.selectedIndex = 0
+
+    self:_refreshQRCode()
+end
+
+---------------------------------------
+function ViewWallet:_onClickBtnTabWithdraw()
+    local gctrl_tabrecharge_state = self.GBtnTabRecharge:GetController("CtrlState")
+    gctrl_tabrecharge_state.selectedIndex = 0
+    local gctrl_tabwithdraw_state = self.GBtnTabWithdraw:GetController("CtrlState")
+    gctrl_tabwithdraw_state.selectedIndex = 1
+    local gctrl_tabrecord_state = self.GBtnTabRecord:GetController("CtrlState")
+    gctrl_tabrecord_state.selectedIndex = 0
+
+    self.GCtrlTab.selectedIndex = 1
+end
+
+---------------------------------------
+function ViewWallet:_onClickBtnTabRecord()
+    local gctrl_tabrecharge_state = self.GBtnTabRecharge:GetController("CtrlState")
+    gctrl_tabrecharge_state.selectedIndex = 0
+    local gctrl_tabwithdraw_state = self.GBtnTabWithdraw:GetController("CtrlState")
+    gctrl_tabwithdraw_state.selectedIndex = 0
+    local gctrl_tabrecord_state = self.GBtnTabRecord:GetController("CtrlState")
+    gctrl_tabrecord_state.selectedIndex = 1
+
+    self.GCtrlTab.selectedIndex = 2
+
+    self.CtrlWallet:RequestVCoinGetTransList()
+end
+
+---------------------------------------
+-- 点击按钮，复制Address到剪切板
+function ViewWallet:_onClickBtnCopyAddress()
+    if self.CtrlWallet.VCoinCurrentInfo ~= nil then
+        self.CasinosContext.LuaMgr:SetClipBoard(self.CtrlWallet.VCoinCurrentInfo.Address)
+        self.CasinosContext.LuaMgr:SetClipBoard(self.CtrlWallet.VCoinCurrentInfo.Address)
+        local address = self.CasinosContext.LuaMgr:GetClipBoard()
+        ViewHelper:UiShowInfoSuccess('已将' .. tostring(address) .. '复制到剪切板')
+    else
+        ViewHelper:UiShowInfoSuccess('Address为空，无需复制')
+    end
+end
+
+---------------------------------------
+-- 点击按钮，复制Memo到剪切板
+function ViewWallet:_onClickBtnCopyMemo()
+    if self.CtrlWallet.VCoinCurrentInfo ~= nil then
+        self.CasinosContext.LuaMgr:SetClipBoard(self.CtrlWallet.VCoinCurrentInfo.Memo)
+        self.CasinosContext.LuaMgr:SetClipBoard(self.CtrlWallet.VCoinCurrentInfo.Memo)
+        local memo = self.CasinosContext.LuaMgr:GetClipBoard()
+        ViewHelper:UiShowInfoSuccess('已将' .. tostring(memo) .. '复制到剪切板')
+    else
+        ViewHelper:UiShowInfoSuccess('Memo为空，无需复制')
+    end
+end
+
+---------------------------------------
+-- 点击按钮，请求验证提现地址有效性
+function ViewWallet:_onClickBtnWithdrawAddressValid()
+    print('请求验证提现地址有效性')
+    if #self.GTxtWithdrawAddress.text == 0 then
+        ViewHelper:UiShowInfoFailed('请填写提现地址')
+    end
+    self.CtrlWallet:RequestVCoinWithdrawAddressValid(self.GTxtWithdrawAddress.text, self.GTxtWithdrawMemo.text)
+end
+
+---------------------------------------
+-- 点击按钮，请求提现
+function ViewWallet:_onClickBtnWithdraw()
+    print('请求提现')
+    if #self.GTxtWithdrawAddress.text == 0 then
+        ViewHelper:UiShowInfoFailed('请填写提现地址')
+    end
+    if #self.GTxtWithdrawGoldVolume.text == 0 then
+        ViewHelper:UiShowInfoFailed('请填写提现数额')
+    end
+    self.CtrlWallet:RequestVCoinWithdraw(self.GTxtWithdrawAddress.text, self.GTxtWithdrawMemo.text, self.GTxtWithdrawGoldVolume.text)
+end
+
+---------------------------------------
+-- 刷新二维码
+function ViewWallet:_refreshQRCode()
+    if self.CtrlWallet.VCoinCurrentInfo ~= nil and self.CtrlWallet.VCoinCurrentInfo.Address ~= nil and #self.CtrlWallet.VCoinCurrentInfo.Address > 0 then
+        if self.GTxtChargeAddress.text == self.CtrlWallet.VCoinCurrentInfo.Address then
+            return
+        end
+
+        -- 生成二维码
+        local gloader_qrcode = self.GComTabRecharge:GetChild('LoaderQRCode').asLoader
+        local url = self.CtrlWallet.VCoinCurrentInfo.Address
+        local t = CS.UnityEngine.Texture2D(256, 256)
+        local colors = self.CasinosContext.LuaMgr:CreateQRCode(url, t.width, t.height)
+        t:SetPixels32(colors)
+        t:Apply()
+        gloader_qrcode.texture = CS.FairyGUI.NTexture(t)
+
+        -- 设置Text Address&Memo
+        self.GTxtChargeAddress.text = self.CtrlWallet.VCoinCurrentInfo.Address
+        self.GTxtChargeMemo.text = self.CtrlWallet.VCoinCurrentInfo.Memo
+    end
+end
+
+---------------------------------------
+-- 刷新金币钻石数值显示
+function ViewWallet:_refreshPlayerGoldAndDiamond()
+    self.GTxtGold.text = UiChipShowHelper:GetGoldShowStr(self.CtrlActor.PropGoldAcc:get(), self.ViewMgr.LanMgr.LanBase)
+    self.GTxtDiamond.text = UiChipShowHelper:GetGoldShowStr(self.CtrlActor.PropDiamond:get(), self.ViewMgr.LanMgr.LanBase, false)
+end
+
+---------------------------------------
+ViewWalletFactory = class(ViewFactory)
+
+---------------------------------------
+function ViewWalletFactory:CreateView()
+    local view = ViewWallet.new()
+    return view
+end

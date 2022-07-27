@@ -1,0 +1,69 @@
+-- Copyright (c) Cragon. All rights reserved.
+
+---------------------------------------
+-- 小红点状态刷新
+EvCtrlRedPointStateChange = EventBase:new(nil)
+
+function EvCtrlRedPointStateChange:new(o)
+    o = o or {}
+    setmetatable(o, self)
+    self.__index = self
+    self.EventName = "EvCtrlRedPointStateChange"
+    self.RedPointType = ''
+    self.Show = false
+    return o
+end
+
+function EvCtrlRedPointStateChange:Reset()
+    self.RedPointType = ''
+    self.Show = false
+end
+
+---------------------------------------
+-- 主界面创建完毕
+EvCtrlOnViewMainCreated = EventBase:new(nil)
+
+function EvCtrlOnViewMainCreated:new(o)
+    o = o or {}
+    setmetatable(o, self)
+    self.__index = self
+    self.EventName = "EvCtrlOnViewMainCreated"
+    return o
+end
+
+function EvCtrlOnViewMainCreated:Reset()
+end
+
+---------------------------------------
+-- 福利控制器，在线奖励可领取倒计时
+EvCtrlRewardRefreshGetOnlineRewardLeftTm = EventBase:new(nil)
+
+function EvCtrlRewardRefreshGetOnlineRewardLeftTm:new(o)
+    o = o or {}
+    setmetatable(o, self)
+    self.__index = self
+    self.EventName = "EvCtrlRewardRefreshGetOnlineRewardLeftTm"
+    self.left_reward_second = 0
+    return o
+end
+
+function EvCtrlRewardRefreshGetOnlineRewardLeftTm:Reset()
+    self.left_reward_second = 0
+end
+
+---------------------------------------
+-- 福利控制器，定时奖励可领取状态刷新
+EvCtrlRewardRefreshGetTimingRewardState = EventBase:new(nil)
+
+function EvCtrlRewardRefreshGetTimingRewardState:new(o)
+    o = o or {}
+    setmetatable(o, self)
+    self.__index = self
+    self.EventName = "EvCtrlRewardRefreshGetTimingRewardState"
+    self.can_getreward = false
+    return o
+end
+
+function EvCtrlRewardRefreshGetTimingRewardState:Reset()
+    self.can_getreward = false
+end

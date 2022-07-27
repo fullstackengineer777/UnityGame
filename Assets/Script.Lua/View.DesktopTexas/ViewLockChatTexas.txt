@@ -1,0 +1,222 @@
+-- Copyright(c) Cragon. All rights reserved.
+-- 普通桌桌内聊天屏蔽对话框
+
+---------------------------------------
+ViewLockChatTexas = class(ViewBase)
+
+---------------------------------------
+function ViewLockChatTexas:ctor()
+    self.GListPlayer = nil
+    self.GBtnClose = nil
+    self.GBtnLockAllSeatPlayer = nil
+    self.GBtnLockAllStandPlayer = nil
+    self.GComLockStandPlayer = nil
+    self.GLoadSpectatorLock1 = nil
+    self.GLoadSpectatorLock2 = nil
+    self.MapPlayerChat = nil
+    self.TextureLockedName = "TextureLocked"
+    self.TextureUnLockName = "TextureUnLock"
+    self.LockAllDesktopPlayerKey = "LockAllDesktopPlayerKey"
+    self.LockAllSpectator = "LockAllSpectator"
+    self.BtnLockedName = "BtnLocked"
+    self.BtnUnLockName = "BtnUnlock"
+    self.SystemIconKey = "System"
+    self.Tween = nil
+
+    -- TODO，组件在包中放置不合理，依赖了Club，CreateMatch包中的资源
+    self.Context:AddUiPackage('Club')
+    self.Context:AddUiPackage('CreateMatch')
+end
+
+---------------------------------------
+function ViewLockChatTexas:OnCreate()
+    self.Tween = ViewHelper:PopUi(self.ComUi, self.ViewMgr.LanMgr:GetLanValue("LockChat"))
+    self:BindEvListener("EvEntityDesktopPlayerSit", self)
+    self:BindEvListener("EvEntityDesktopPlayerLeaveChair", self)
+    self.ViewDesktop = self.ViewMgr:GetView("DesktopTexas")
+    local com_bg = self.ComUi:GetChild("ComBgAndClose").asCom
+    self.GBtnClose = com_bg:GetChild("BtnClose").asButton
+    self.GBtnClose.onClick:Add(
+            function()
+                self:_onClickClose()
+            end
+    )
+    local com_shade = com_bg:GetChild("ComShade").asCom
+    com_shade.onClick:Add(
+            function()
+                self:_onClickClose()
+            end
+    )
+    self.GBtnLockAllSeatPlayer = self.ComUi:GetChild("Lan_Btn_AllPlayer").asButton
+    self.GBtnLockAllSeatPlayer.onClick:Add(
+            function()
+                self:_onClickBtnAllPlayer()
+            end
+    )
+    self.GBtnLockAllStandPlayer = self.ComUi:GetChild("Lan_Btn_Onlooker").asButton
+    self.GBtnLockAllStandPlayer.onClick:Add(
+            function()
+                self:_onClickBtnAllSpectator()
+            end
+    )
+    self.GListPlayer = self.ComUi:GetChild("ListPlayer").asList
+    self.GComLockStandPlayer = self.ComUi:GetChild("ComLockStandPlayer").asCom
+    self.GComLockStandPlayer.onClick:Add(
+            function()
+                self:_onClickBtnAllSpectator()
+            end
+    )
+    self.GLoadSpectatorLock1 = self.ComUi:GetChild("LoaderLock1").asLoader
+    self.GLoadSpectatorLock2 = self.ComUi:GetChild("LoaderLock2").asLoader
+    self.MapPlayerChat = {}
+end
+
+---------------------------------------
+function ViewLockChatTexas:OnDestroy()
+    if self.Tween ~= nil then
+        self.Tween:Kill(false)
+        self.Tween = nil
+    end
+    self:UnbindEvListener(self)
+    self.MapPlayerChat = {}
+end
+
+---------------------------------------
+function ViewLockChatTexas:OnHandleEv(ev)
+    if (ev ~= nil) then
+        if (ev.EventName == "EvEntityDesktopPlayerSit") then
+            self:_playerEnter(ev.guid, ev.icon_name, ev.account_id, ev.nick_name, ev.vip_level)
+        elseif (ev.EventName == "EvEntityDesktopPlayerLeaveChair") then
+            self:_playerLeave(ev.guid)
+        end
+    end
+end
+
+---------------------------------------
+function ViewLockChatTexas:InitLockChat(all_seat)
+    if (CS.UnityEngine.PlayerPrefs.HasKey(self.LockAllDesktopPlayerKey)) then
+        self.GBtnLockAllSeatPlayer.selected = CS.System.Boolean.Parse(CS.UnityEngine.PlayerPrefs.GetString(self.LockAllDesktopPlayerKey))
+    else
+        self.GBtnLockAllSeatPlayer.selected = false
+        CS.UnityEngine.PlayerPrefs.SetString(self.LockAllDesktopPlayerKey, tostring(self.GBtnLockAllSeatPlayer.selected))
+    end
+    if (CS.UnityEngine.PlayerPrefs.HasKey(self.LockAllSpectator)) then
+        self.GBtnLockAllStandPlayer.selected = CS.System.Boolean.Parse(CS.UnityEngine.PlayerPrefs.GetString(self.LockAllSpectator))
+    else
+        self.GBtnLockAllStandPlayer.selected = false
+        CS.UnityEngine.PlayerPrefs.GetString(self.LockAllSpectator, tostring(self.GBtnLockAllStandPlayer.selected))
+    end
+
+    self:_createPlayerChatLock("", "", "", "", 0, true)
+
+    for i = 0, #all_seat do
+        local seat_info = all_seat[i]
+        local et_guid = ""
+        local icon = ""
+        local name = ""
+        local account_id = ""
+        local vip_level = 0
+        if (seat_info ~= nil and seat_info.player_texas ~= nil) then
+            if (seat_info.player_texas ~= nil) then
+                et_guid = seat_info.player_texas.Guid
+                icon = seat_info.player_texas.PlayerDataDesktop.IconName
+                name = seat_info.player_texas.PlayerDataDesktop.NickName
+                account_id = seat_info.player_texas.PlayerDataDesktop.AccountId
+                vip_level = seat_info.player_texas.PlayerDataDesktop.VIPLevel
+            end
+        end
+
+        self:_createPlayerChatLock(et_guid, icon, name, account_id, vip_level, false)
+    end
+end
+
+---------------------------------------
+function ViewLockChatTexas:_createPlayerChatLock(et_guid, icon, name, account_id, vip_level, is_system)
+    local is_lock = false
+    if (is_system) then
+        is_lock = self.ViewDesktop.ControllerDesktop.LockSysChat
+    else
+        is_lock = self.ViewDesktop.Desktop.MapSeatPlayerChatIsLock[et_guid]
+    end
+
+    local lock_player = self.GListPlayer:AddItemFromPool().asCom
+    local player_chat = ItemPlayerChatLock:new(nil, lock_player, self.ViewMgr, self.ViewDesktop.ControllerDesktop.PlayerGuid)
+    self.MapPlayerChat[player_chat] = player_chat
+
+    player_chat:setPlayerChatInfo(et_guid, icon, name, account_id, vip_level, is_lock, is_system)
+end
+
+---------------------------------------
+function ViewLockChatTexas:_playerEnter(guid, icon, account_id, nick_name, vip_level)
+    local frist_emptylockpLayer = nil
+    for k, v in pairs(self.MapPlayerChat) do
+        local lock_player = v
+        if (lock_player.IsSystem == false and CS.System.String.IsNullOrEmpty(lock_player.PlayerEtguid)) then
+            frist_emptylockpLayer = lock_player
+            break
+        end
+    end
+
+    local is_lock = self.ViewDesktop.Desktop.MapSeatPlayerChatIsLock[guid]
+    frist_emptylockpLayer:setPlayerChatInfo(guid, icon, nick_name, account_id, vip_level, is_lock, false)
+end
+
+---------------------------------------
+function ViewLockChatTexas:_playerLeave(guid)
+    for k, v in pairs(self.MapPlayerChat) do
+        local lock_player = v
+        if (lock_player.PlayerEtguid == guid) then
+            lock_player:setPlayerChatInfo("", "", "", "", 0, self.GBtnLockAllSeatPlayer.selected, false)
+            break
+        end
+    end
+end
+
+---------------------------------------
+function ViewLockChatTexas:_onClickBtnAllSpectator()
+    CS.UnityEngine.PlayerPrefs.SetString(self.LockAllSpectator, tostring(self.GBtnLockAllStandPlayer.selected))
+    local lock_name = self.TextureUnLockName
+    if (self.GBtnLockAllStandPlayer.selected) then
+        lock_name = self.TextureLockedName
+    end
+    self.GLoadSpectatorLock1.icon = CS.FairyGUI.UIPackage.GetItemURL("LockChat", lock_name)
+    self.GLoadSpectatorLock2.icon = CS.FairyGUI.UIPackage.GetItemURL("LockChat", lock_name)
+
+    local ev = self:GetEv("EvUiRequestLockAllSpectator")
+    if (ev == nil) then
+        ev = EvUiRequestLockAllSpectator:new(nil)
+    end
+    ev.requestLock = self.GBtnLockAllStandPlayer.selected
+    self:SendEv(ev)
+end
+
+---------------------------------------
+function ViewLockChatTexas:_onClickBtnAllPlayer()
+    CS.UnityEngine.PlayerPrefs.SetString(self.LockAllDesktopPlayerKey, tostring(self.GBtnLockAllSeatPlayer.selected))
+
+    local ev = self:GetEv("EvUiRequestLockAllDesktopPlayer")
+    if (ev == nil) then
+        ev = EvUiRequestLockAllDesktopPlayer:new(nil)
+    end
+    ev.requestLock = self.GBtnLockAllSeatPlayer.selected
+    self:SendEv(ev)
+
+    for k, v in pairs(self.MapPlayerChat) do
+        local chat_lock = v
+        chat_lock:setChatLock(self.GBtnLockAllSeatPlayer.selected)
+    end
+end
+
+---------------------------------------
+function ViewLockChatTexas:_onClickClose()
+    self.ViewMgr:DestroyView(self)
+end
+
+---------------------------------------
+ViewLockChatTexasFactory = class(ViewFactory)
+
+---------------------------------------
+function ViewLockChatTexasFactory:CreateView()
+    local view = ViewLockChatTexas:new()
+    return view
+end

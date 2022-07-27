@@ -1,0 +1,7 @@
+ManifestFileVersion: 0
+CRC: 694038884
+AssetBundleManifest:
+  AssetBundleInfos:
+    Info_0:
+      Name: settings.ab
+      Dependencies: {}

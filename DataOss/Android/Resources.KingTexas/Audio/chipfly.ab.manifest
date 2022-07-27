@@ -1,0 +1,16 @@
+ManifestFileVersion: 0
+CRC: 255706013
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 1c129c1f13cf0d386a76867700ac8f62
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 3f7d0c5e0986ec71841622bcb2f9be1c
+HashAppended: 0
+ClassTypes:
+- Class: 83
+  Script: {instanceID: 0}
+Assets:
+- Assets/Resources.KingTexas/BuildAssetBundleFromSingle/Audio/chipfly.wav
+Dependencies: []

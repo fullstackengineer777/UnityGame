@@ -1,0 +1,106 @@
+-- Copyright(c) Cragon. All rights reserved.
+
+---------------------------------------
+ViewInviteFriendPlay = class(ViewBase)
+
+---------------------------------------
+function ViewInviteFriendPlay:ctor()
+    self.Tween = nil
+end
+
+---------------------------------------
+function ViewInviteFriendPlay:OnCreate()
+    self.Tween = ViewHelper:PopUi(self.ComUi, self.ViewMgr.LanMgr:GetLanValue("InviteFriendPlayCard"))
+    self.ControllerIM = self.ControllerMgr:GetController("IM")
+    self.GListOnLine = self.ComUi:GetChild("ListOnLine").asList
+    self.GListOnLine:SetVirtual()
+    self.GListOnLine.itemRenderer = function(index, item)
+        self:rendererOnLineFriend(index, item)
+    end
+
+    self.GListOffLine = self.ComUi:GetChild("ListOffLine").asList
+    self.GListOffLine:SetVirtual()
+    self.GListOffLine.itemRenderer = function(index, item)
+        self:rendererOffLineFriend(index, item)
+    end
+    local com_bg = self.ComUi:GetChild("ComBgAndClose").asCom
+    local btn_close = com_bg:GetChild("BtnClose").asButton
+    btn_close.onClick:Add(
+            function()
+                self:_onClickBtnClose()
+            end
+    )
+    local com_shade = com_bg:GetChild("ComShade").asCom
+    com_shade.onClick:Add(
+            function()
+                self:_onClickBtnClose()
+            end
+    )
+    self.ViewMgr:BindEvListener("EvEntityFriendOnlineStateChange", self)
+end
+
+---------------------------------------
+function ViewInviteFriendPlay:OnDestroy()
+    if self.Tween ~= nil then
+        self.Tween:Kill(false)
+        self.Tween = nil
+    end
+    self:UnbindEvListener(self)
+end
+
+---------------------------------------
+function ViewInviteFriendPlay:OnHandleEv(ev)
+    if (ev ~= nil) then
+        if (ev.EventName == "EvEntityFriendOnlineStateChange") then
+            self:setFriend()
+        end
+    end
+end
+
+---------------------------------------
+function ViewInviteFriendPlay:setFriend()
+    self.GListOnLine.numItems = #self.ControllerIM.IMFriendList.ListOnLineFriendGuid
+    self.GListOffLine.numItems = #self.ControllerIM.IMFriendList.ListOffLineFriendGuid
+end
+
+---------------------------------------
+function ViewInviteFriendPlay:_onClickBtnClose()
+    self.ViewMgr:DestroyView(self)
+end
+
+---------------------------------------
+function ViewInviteFriendPlay:rendererOnLineFriend(index, item)
+    local list_online_friend = self.ControllerIM.IMFriendList.ListOnLineFriendGuid
+    if (#list_online_friend > index) then
+        local friend_guid = list_online_friend[index + 1]
+        local friend_info = self.ControllerIM.IMFriendList:getFriendInfo(friend_guid)
+        if (friend_info ~= nil) then
+            local com = CS.Casinos.LuaHelper.GObjectCastToGCom(item)
+            local ui_item = ItemInviteFriendPlay:new(nil, com, self)
+            ui_item:SetFriendInfo(friend_info)
+        end
+    end
+end
+
+---------------------------------------
+function ViewInviteFriendPlay:rendererOffLineFriend(index, item)
+    local list_offline_friend = self.ControllerIM.IMFriendList.ListOffLineFriendGuid
+    if (#list_offline_friend > index) then
+        local friend_guid = list_offline_friend[index + 1]
+        local friend_info = self.ControllerIM.IMFriendList:getFriendInfo(friend_guid)
+        if (friend_info ~= nil) then
+            local com = CS.Casinos.LuaHelper.GObjectCastToGCom(item)
+            local ui_item = ItemInviteFriendPlay:new(nil, com, self)
+            ui_item:SetFriendInfo(friend_info)
+        end
+    end
+end
+
+---------------------------------------
+ViewInviteFriendPlayFactory = class(ViewFactory)
+
+---------------------------------------
+function ViewInviteFriendPlayFactory:CreateView()
+    local view = ViewInviteFriendPlay:new()
+    return view
+end

@@ -1,0 +1,202 @@
+-- Copyright(c) Cragon. All rights reserved.
+-- 百人桌，下注奖励对话框视图
+
+---------------------------------------
+-- 代表一个宝箱
+UiDesktopHBetRewardItem = class()
+
+---------------------------------------
+function UiDesktopHBetRewardItem:ctor(bet_reward, co_betreward, betreward_tbid, state, view_mgr)
+    self.ViewMgr = view_mgr
+    self.BetReward = bet_reward
+    self.GCoBetReward = co_betreward
+    self.BetRewardTbId = betreward_tbid
+    self.DesktopHDialyGetBetRewardState = state
+    self.GTextBetRewardValue = self.GCoBetReward:GetChild("RewardValue").asTextField
+    self.GTextBetValue = self.GCoBetReward:GetChild("BetValue").asTextField
+    local tb_reward = self.ViewMgr.TbDataMgr:GetData("DesktopHBetReward", betreward_tbid)
+    self.GTextBetRewardValue.text = UiChipShowHelper:GetGoldShowStr(tb_reward.BetRewardValue, self.ViewMgr.LanMgr.LanBase)
+    self.GTextBetValue.text = UiChipShowHelper:GetGoldShowStr(tb_reward.BetValue, self.ViewMgr.LanMgr.LanBase)
+    self.GCoBetReward.onClick:Add(
+            function()
+                self:_onClickBetReward()
+            end
+    )
+end
+
+---------------------------------------
+function UiDesktopHBetRewardItem:_onClickBetReward()
+    local tips = ""
+    local tb_datamgr = self.ViewMgr.TbDataMgr
+    if (self.DesktopHDialyGetBetRewardState == DesktopHDialyGetBetRewardState.Get) then
+        tips = self.ViewMgr.LanMgr:GetLanValue("HasBeenReceivedTreasure")
+    else
+        local reward_gold = 0
+        local t_desktophbetreward = tb_datamgr:GetMapData("DesktopHBetReward")
+        for k, v in pairs(t_desktophbetreward) do
+            local state = self.BetReward.BDesktopHDialyBetReward.MapGetRewardState[k]
+            if (state ~= DesktopHDialyGetBetRewardState.Get) then
+                local tb_data = v
+                if (k <= self.BetRewardTbId) then
+                    reward_gold = reward_gold + tb_data.BetRewardValue
+                end
+            end
+        end
+
+        local tb_reward = tb_datamgr:GetData("DesktopHBetReward", self.BetRewardTbId)
+        tips = string.format(self.ViewMgr.LanMgr:GetLanValue("BetRechCanCollectBox"),
+                UiChipShowHelper:GetGoldShowStr(tb_reward.BetValue, self.ViewMgr.LanMgr.LanBase),
+                UiChipShowHelper:GetGoldShowStr(reward_gold, self.ViewMgr.LanMgr.LanBase))
+
+        local ev = self.ViewMgr:GetEv("EvDesktopHGetBetReward")
+        if (ev == nil) then
+            ev = EvDesktopHGetBetReward:new(nil)
+        end
+        self.ViewMgr:SendEv(ev)
+    end
+
+    ViewHelper:UiShowInfoSuccess(tips)
+end
+
+---------------------------------------
+-- 下注奖励对话框
+ViewDesktopHBetReward = class(ViewBase)
+
+---------------------------------------
+function ViewDesktopHBetReward:ctor()
+    self.BDesktopHDialyBetReward = nil
+    self.GBtnGetAllReward = nil
+    self.GTextBetTotal = nil
+    self.GProBet = nil
+    self.ViewDesktopH = nil
+    self.Tween = nil
+    self.BetRewardTitle = "ComReward"
+end
+
+---------------------------------------
+function ViewDesktopHBetReward:OnCreate()
+    self:BindEvListener("EvEntityInitBetReward", self)
+
+    self.Tween = ViewHelper:PopUi(self.ComUi, self.ViewMgr.LanMgr:GetLanValue("BetReward"))
+
+    self.ViewDesktopH = self.ViewMgr:GetView("DesktopH")
+    local co_history_close = self.ComUi:GetChild("ComBgAndClose").asCom
+    local btn_history_close = co_history_close:GetChild("BtnClose").asButton
+    btn_history_close.onClick:Add(
+            function()
+                self:_onClickBtnHelpClose()
+            end
+    )
+    local com_shade = co_history_close:GetChild("ComShade").asCom
+    com_shade.onClick:Add(
+            function()
+                self:_onClickBtnHelpClose()
+            end
+    )
+    self.GBtnGetAllReward = self.ComUi:GetChild("Lan_Btn_OneKeyCollection").asButton
+    self.GBtnGetAllReward.onClick:Add(
+            function()
+                self:_onClickGetAllBetReward()
+            end
+    )
+    self.GTextBetTotal = self.ComUi:GetChild("BetTotal").asTextField
+    self.GProBet = self.ComUi:GetChild("ProBet").asProgress
+end
+
+---------------------------------------
+function ViewDesktopHBetReward:OnDestroy()
+    if self.Tween ~= nil then
+        self.Tween:Kill(false)
+        self.Tween = nil
+    end
+
+    self:UnbindEvListener(self)
+end
+
+---------------------------------------
+function ViewDesktopHBetReward:OnHandleEv(ev)
+    if (ev ~= nil) then
+        if (ev.EventName == "EvEntityInitBetReward") then
+            self.BDesktopHDialyBetReward = ev.init_dailybet_reward
+            local current_betgold = self.BDesktopHDialyBetReward.TotalBetGold
+            self.GTextBetTotal.text = UiChipShowHelper:GetGoldShowStr(current_betgold,
+                    self.ViewMgr.LanMgr.LanBase)
+
+            local can_get = false
+            local t_MapGetRewardState = self.BDesktopHDialyBetReward.MapGetRewardState
+            for i, v in pairs(t_MapGetRewardState) do
+                if (v == DesktopHDialyGetBetRewardState.NotGet) then
+                    can_get = true
+                end
+                local co_betreward = self.ComUi:GetChild(self.BetRewardTitle .. i).asCom
+                UiDesktopHBetRewardItem.new(self, co_betreward, i, v, self.ViewMgr)
+            end
+
+            self.GBtnGetAllReward.enabled = can_get
+            local l = self.ViewMgr.TbDataMgr:GetMapData("DesktopHBetReward")
+            local tb_betreward_k, tb_betreward_v = LuaHelper:GetTableFirstEle(l)
+
+            for k, v in pairs(l) do
+                local tb_betreward_value = tb_betreward_v.BetValue
+                if (current_betgold > tb_betreward_value and
+                        v.BetValue < current_betgold) then
+                    tb_betreward_v = v
+                else
+                    if (v.BetValue > current_betgold) then
+                        break
+                    end
+                end
+            end
+
+            local tb_maxbetreward = l[#l]
+            local tb_next_betreward = nil
+            if (tb_betreward_v.Id < tb_maxbetreward.Id) then
+                tb_next_betreward = l[tb_betreward_v.Id]
+            end
+
+            if (tb_next_betreward == nil) then
+                self.GProBet.value = tb_maxbetreward.BetProgressValue
+            else
+                local left_betgold = current_betgold - tb_betreward_v.BetValue
+                if (left_betgold < 0) then
+                    left_betgold = 0
+                end
+
+                if (left_betgold == 0) then
+                    self.GProBet.value = tb_betreward_v.BetProgressValue
+                else
+                    local bet_values = tb_next_betreward.BetValue - tb_betreward_v.BetValue
+                    local bet_pro = tb_next_betreward.BetProgressValue - tb_betreward_v.BetProgressValue
+                    local betpro_value = tb_betreward_v.BetProgressValue
+                    betpro_value = betpro_value + ((bet_pro / bet_values) * left_betgold)
+                    self.GProBet.value = betpro_value
+                end
+            end
+        end
+    end
+end
+
+---------------------------------------
+function ViewDesktopHBetReward:_onClickGetAllBetReward()
+    local ev = self:GetEv("EvDesktopHGetBetReward")
+    if (ev == nil) then
+        ev = EvDesktopHGetBetReward:new(nil)
+    end
+    ev.factory_name = self.ViewDesktopH.FactoryName
+    self:SendEv(ev)
+    self.GBtnGetAllReward.enabled = false
+end
+
+---------------------------------------
+function ViewDesktopHBetReward:_onClickBtnHelpClose()
+    self.ViewMgr:DestroyView(self)
+end
+
+---------------------------------------
+ViewDesktopHBetRewardFactory = class(ViewFactory)
+
+---------------------------------------
+function ViewDesktopHBetRewardFactory:CreateView()
+    local view = ViewDesktopHBetReward:new()
+    return view
+end

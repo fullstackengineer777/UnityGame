@@ -1,0 +1,16 @@
+ManifestFileVersion: 0
+CRC: 1993221164
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 9e4523cb07c2463e7f69b8848b74f2f6
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+Assets:
+- Assets/Resources.KingTexas/BuildAssetBundleFromFold/Ui/CreateDeskTop/CreateDeskTop_fui.bytes
+Dependencies: []

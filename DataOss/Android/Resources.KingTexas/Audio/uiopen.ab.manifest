@@ -1,0 +1,16 @@
+ManifestFileVersion: 0
+CRC: 205185368
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: a4b936541bd3d7e31cf321fa20857825
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 3f7d0c5e0986ec71841622bcb2f9be1c
+HashAppended: 0
+ClassTypes:
+- Class: 83
+  Script: {instanceID: 0}
+Assets:
+- Assets/Resources.KingTexas/BuildAssetBundleFromSingle/Audio/UIOpen.wav
+Dependencies: []

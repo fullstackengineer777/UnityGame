@@ -1,0 +1,55 @@
+-- Copyright(c) Cragon. All rights reserved.
+-- 通杀动画，ViewDesktopH持有
+
+---------------------------------------
+UiDesktopHTongSha = {}
+
+---------------------------------------
+function UiDesktopHTongSha:new(com_ui, view_desktoph)
+    local o = {}
+    setmetatable(o, { __index = self })
+    o.ViewDesktopH = view_desktoph
+    o.ComUi = com_ui
+    o.AutoHideTm = 3
+    o.ComUi.visible = false
+    o.AniTongSha = o.ComUi:GetTransition("AniTongSha")
+    o.ActionShowEnd = nil
+    o.DelayHideSelf = nil
+    o.TweenTongShaMoveY = nil
+    o.CasinosContext = CS.Casinos.CasinosContext.Instance
+    o.ComUi.onClick:Add(
+            function()
+                o:Reset()
+            end
+    )
+    return o
+end
+
+---------------------------------------
+function UiDesktopHTongSha:ShowEffect(show_end)
+    self.ActionShowEnd = show_end
+    self.ComUi.visible = true
+    self.AniTongSha:Play()
+    self.ViewDesktopH:PlaySound('AllWin')
+    self.DelayHideSelf = self.CasinosContext.DelayMgr:Delay(self.AutoHideTm,
+            function()
+                self:Reset()
+            end)
+end
+
+---------------------------------------
+function UiDesktopHTongSha:Reset()
+    self.ComUi.visible = false
+    if (self.DelayHideSelf ~= nil) then
+        self.DelayHideSelf:Kill(false)
+        self.DelayHideSelf = nil
+    end
+    if (self.TweenTongShaMoveY ~= nil) then
+        self.TweenTongShaMoveY:Kill(false)
+        self.TweenTongShaMoveY = nil
+    end
+    if (self.ActionShowEnd ~= nil) then
+        self.ActionShowEnd()
+        self.ActionShowEnd = nil
+    end
+end

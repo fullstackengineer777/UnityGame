@@ -1,0 +1,16 @@
+ManifestFileVersion: 0
+CRC: 3746776601
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 2d230b93f1447ec7b4c5f0b15e8eb170
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 3f7d0c5e0986ec71841622bcb2f9be1c
+HashAppended: 0
+ClassTypes:
+- Class: 83
+  Script: {instanceID: 0}
+Assets:
+- Assets/Resources.KingTexas/BuildAssetBundleFromSingle/Audio/bombf.mp3
+Dependencies: []
